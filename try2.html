@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang=”en”>
+	<head>
+		
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+		
+	</head>
+	<body>
+			Enter URL:
+			<input type="text" id="UrlInput" style="width: 900px;" value= window.location.search.substring(1) >
+			<script type="text/javascript"> 
+				var query = window.location.search.substring(1);
+				document.getElementById("UrlInput").value = query;
+			</script>
+			</br></br>
+           <button type="button" onclick="SendToKodi('192.168.1.15:8080','סלון')" style="margin-left:10px;">שלח לסלון</button>
+           <button type="button" onclick="SendToKodi('192.168.2.15:8080','הורים')" style="margin-left:10px;">שלח להורים</button>
+           <button type="button" onclick="SendToKodi('192.168.2.15:8080','שירי')" style="margin-left:10px;">שלח לשירי</button>
+           <button type="button" onclick="SendToKodi('192.168.2.15:8080','דניאל')" style="margin-left:10px;">שלח לדניאל</button>
+           <button type="button" onclick="SendToKodi('192.168.2.15:8080','יעל')" style="margin-left:10px;">שלח ליעל</button>
+		   <br></p></p>
+
+			<textarea id="kodioutput" cols="150" rows="10"></textarea>
+
+
+	</body>
+	<script>
+		  	
+
+		// 'Hacky' Way To Send URL's To Kodi/XBMC Using JS/JQuery
+	
+		// Address And Port For Your Kodi Install
+//		var KodiAddress = 'http://192.168.1.15:8080';
+		
+		// Send URL To Kodi On Button Click
+function SendToKodi (StationAddress,StationName) {
+
+			var KodiAddress = 'http://' + StationAddress ;
+			var kodioutput = $( '#kodioutput' );
+			var URL = $( 'input' ).val();	// Grab Input Value
+			
+			// Proceed On URL Not Being Empty (Validate URL Perhaps)
+			if ( URL !== '' ) {	
+				kodioutput.val( "Sending to "+ StationName + ' \n'+ KodiAddress + '\n' + URL + "........" );
+				$.ajax({
+					type: 'GET',
+					url: KodiAddress + '/jsonrpc',
+					dataType: 'jsonp',
+					jsonpCallback: 'jsonCallback',
+					type: 'GET',
+					async: true,
+					timeout: 50000,
+					data: 'request=' + encodeURIComponent( '{"jsonrpc":"2.0","method":"Player.Open","params":{"item":{"file":"' + URL + '"}},"id":"1"}' )
+				})
+				// If Success, Notify User
+				.done( function( data, textStatus, jqXHR ) {
+					if ( jqXHR.status == 200 && data['result'] == 'OK' ) {
+						kodioutput.val( kodioutput.val() + "\n done!\n" );
+					} else {
+						kodioutput.val( kodioutput.val() + "\n error!\n" );
+					}
+				})
+				// Older Versions Of Kodi/XBMC Tend To Fail Due To CORS But Typically If A '200' Is Returned Then It Has Worked!
+				.fail( function( jqXHR, textStatus ) {
+					if ( jqXHR.status == 200 ) {
+						kodioutput.val( kodioutput.val() + "\n done!\n" );
+					} else {
+						kodioutput.val( kodioutput.val() + "\n error - " + textStatus + "! \n" );
+					}
+				});
+			}
+		};	
+	</script>
+</html>
